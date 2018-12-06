@@ -1,76 +1,95 @@
 #!/bin/bash
 
+# Dependencies
 sudo yum update -y
-sudo yum install -y mc tomcat epel-release screen tmux mysql-server mod_ssl ntpdate ntp jetty rsync telnet vim git
+sudo yum install -y mc tomcat postfix mariadb mariadb-server screen tmux mysql-server mod_ssl ntpdate ntp jetty rsync telnet vim git
 
+# Install PhenoTips
 curl https://phenotips.org/download/PhenoTips/Download/PhenoTips.repo > PhenoTips.repo
 sudo chown root:root PhenoTips.repo
 sudo mv PhenoTips.repo /etc/yum.repos.d/
 sudo yum install -y phenotips
 
-sudo sed '/^127\.0\.0\.1/ s/$/ test.ccm.sickkids.ca/' /etc/hosts
-
-sudo hostnamectl set-hostname webapps.ccm.sickkids.ca
-
+# Download server setup helper files
 cd ~
 git clone https://github.com/phenotips/pt-farm-server
 cd pt-farm-server
 
+# Hostname
+sudo hostnamectl set-hostname webapps.ccm.sickkids.ca
+
+# SSH
 keybase pgp decrypt -i authorized_keys.asc -o ~/.ssh/authorized_keys
 
+# NTP
 sudo systemctl start ntpd
-sudo chkconfig ntpd on
+sudo systemctl enable ntpd
 
-
-curl https://repo.mysql.com//mysql80-community-release-el7-1.noarch.rpm -o mysql80-community-release-el7-1.noarch.rpm
-sudo rpm -ivh mysql80-community-release-el7-1.noarch.rpm
-sudo yum update -y
-sudo yum install -y mysql-server
-rm mysql80-community-release-el7-1.noarch.rpm
+# Database
 sudo systemctl start mysqld
+sudo systemctl enable mysqld
+# mysqldump -u root --all-databases > alldb.sql
+# mysql -u root < alldb.sql
 
+# Mail server
+sudo echo 'relayhost = mailrelay.research.sickkids.ca' >> /etc/postfix/main.cf
+sudo systemctl restart postfix
+sudo systemctl enable postfix
+# sendmail daniel.snider@sickkids.ca << EOF
+# Subject: Terminal Email Send
+# Email Content line 1
+# EOF
 
+# SSL keys
+keybase pgp decrypt -i ca-bundle.trust.crt.asc -o ca-bundle.trust.crt
+keybase pgp decrypt -i ca-bundle.crt.asc -o ca-bundle.crt
+keybase pgp decrypt -i DigiCertCA.crt.asc -o DigiCertCA.crt
+keybase pgp decrypt -i star_ccm_sickkids_ca.crt.asc -o star_ccm_sickkids_ca.crt
+keybase pgp decrypt -i star_ccm_sickkids_ca.key.asc -o star_ccm_sickkids_ca.key
 
+sudo mkdir /etc/httpd/certs/
+sudo cp ./star_ccm_sickkids_ca.crt /etc/pki/tls/certs/star_ccm_sickkids_ca.crt
+sudo cp ./ca-bundle.trust.crt /etc/pki/tls/certs/ca-bundle.trust.crt
+sudo cp ./DigiCertCA.crt /etc/pki/tls/certs/DigiCertCA.crt
+sudo cp ./ca-bundle.crt /etc/pki/tls/certs/ca-bundle.crt
+sudo cp ./star_ccm_sickkids_ca.crt /etc/httpd/certs/star_ccm_sickkids_ca.crt
+sudo cp ./star_ccm_sickkids_ca.key /etc/httpd/certs/star_ccm_sickkids_ca.key
+sudo cp ./DigiCertCA.crt /etc/httpd/certs/DigiCertCA.crt
 
+sudo chmod 644 /etc/pki/tls/certs/star_ccm_sickkids_ca.crt
+sudo chmod 644 /etc/pki/tls/certs/ca-bundle.trust.crt
+sudo chmod 644 /etc/pki/tls/certs/DigiCertCA.crt
+sudo chmod 644 /etc/pki/tls/certs/ca-bundle.crt
+sudo chmod 644 /etc/httpd/certs/star_ccm_sickkids_ca.crt
+sudo chmod 644 /etc/httpd/certs/star_ccm_sickkids_ca.key
+sudo chmod 644 /etc/httpd/certs/DigiCertCA.crt
+ln -s /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/cert.pem
 
+rm ./ca-bundle.trust.crt
+rm ./ca-bundle.crt
+rm ./DigiCertCA.crt
+rm ./star_ccm_sickkids_ca.crt
+rm ./star_ccm_sickkids_ca.key
 
-sudo grep 'temporary password' /var/log/mysqld.log | rev | cut -d' ' -f 1 | rev
+##################
+# WORK IN PROGRESS ...
+##################
 
-
-
-/etc/httpd/conf.d/phenotips.conf
-
-mv /etc/tomcat/Catalina/localhost/phenotips.xml /etc/tomcat/Catalina/localhost/ROOT.xml
-
-sudo systemctl start httpd
+# Tomcat
 sudo systemctl start tomcat
+sudo systemctl enable tomcat
+
+# HTTPD
+sudo systemctl start httpd
+sudo systemctl enable httpd
+
+# Configure PhenoTips
 
 
-
-
-
-/usr/bin/mysqld_safe --skip-grant-tables &
-vi /etc/resolv.conf
-
-
-73  /etc/init.d/mysqld start
-85  /etc/init.d/tomcat restart
-101  /etc/init.d/tomcat stop
-105  /etc/init.d/tomcat start ; tail -f /var/log/tomcat/catalina.out
-112  /etc/init.d/tomcat restart ; tail -f /var/log/tomcat/catalina.out
-168  /etc/init.d/httpd restart
-174  /etc/init.d/sshd restart
-192  /etc/init.d/iptables status
-193  /etc/init.d/iptables save
-253  /etc/init.d/postfix restart
-286  /etc/init.d/ntpdate restart
-291  /etc/init.d/ntpd start
-354  /etc/init.d/tomcat restart
-544  /etc/init.d/httpd reload
-
-chkconfig tomcat on
-chkconfig mysqld on
-chkconfig httpd on
+# Test website login pages
+curl -v https://genenames.phenotips.org/info
 
 
 # sudo reboot
+
+
