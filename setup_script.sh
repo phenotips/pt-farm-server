@@ -82,6 +82,9 @@ keybase decrypt -i xwiki.cfg.asc -o xwiki.cfg
 sudo mv hibernate.cfg.xml /var/lib/phenotips/webapp/WEB-INF/hibernate.cfg.xml
 sudo mv xwiki.cfg /var/lib/phenotips/webapp/WEB-INF/xwiki.cfg
 sudo cp xwiki.properties /var/lib/phenotips/webapp/WEB-INF/xwiki.properties
+sudo chown -R tomcat:tomcat /var/lib/phenotips/webapp/WEB-INF/hibernate.cfg.xml \
+  /var/lib/phenotips/webapp/WEB-INF/xwiki.cfg \
+  /var/lib/phenotips/webapp/WEB-INF/xwiki.properties
 rm hibernate.cfg.xml xwiki.cfg
 
 ## Migrate Phenotips data directory
