@@ -88,9 +88,13 @@ rm hibernate.cfg.xml xwiki.cfg
 # tar -vczf phenotips-data.tar.gz /var/lib/phenotips/data/extension /var/lib/phenotips/data/jobs /var/lib/phenotips/data/storage
 # scp root@webapps.ccm.sickkids.ca:/var/lib/phenotips/data/phenotips-data.tar.gz ./
 # tar -vxzf phenotips-data.tar.gz
-# sudo mv ./var/lib/phenotips/data/extension /var/lib/phenotips/data/extension
-# sudo mv ./var/lib/phenotips/data/jobs /var/lib/phenotips/data/jobs
-# sudo mv ./var/lib/phenotips/data/storage /var/lib/phenotips/data/storage
+# sudo mv /var/lib/phenotips/data/extension /var/lib/phenotips/data/extension_old
+# sudo mv /var/lib/phenotips/data/jobs /var/lib/phenotips/data/jobs_old
+# sudo mv /var/lib/phenotips/data/storage /var/lib/phenotips/data/storage_old
+# sudo mv ./var/lib/phenotips/data/extension /var/lib/phenotips/data/
+# sudo mv ./var/lib/phenotips/data/jobs /var/lib/phenotips/data/
+# sudo mv ./var/lib/phenotips/data/storage /var/lib/phenotips/data/
+# sudo chown -R tomcat:tomcat /var/lib/phenotips/data/
 # rm phenotips-data.tar.gz var -r
 
 # Start Phenotips
